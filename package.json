@@ -1,0 +1,21 @@
+{
+  "name": "typeglitch-c1",
+  "version": "0.0.1",
+  "description": "A TypeScript-first chaos engineering library for mocking unpredictable API behaviors.",
+  "license": "MIT",
+  "author": "danielgurczynski",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielgurczynski/typeglitch-c1.git"
+  },
+  "scripts": {
+    "test": "echo \"no tests yet\""
+  },
+  "keywords": [
+    "dx",
+    "testing",
+    "chaos-engineering",
+    "typescript",
+    "tooling"
+  ]
+}

@@ -2,25 +2,37 @@
 
 First — thank you. This project only works if the community shows up.
 
+## Ground rules
+
+- One logical change per PR
+- Tests added or updated for any behaviour change
+- Docs updated when public APIs or workflows change
+- PR description explains the **why**, not just the what
+- Be kind. Assume good faith. Help newcomers.
+
 ## Quick start
 
-1. Fork & clone
-2. `npm install` (or `bun install`)
-3. `npm test` — make sure everything is green before you start
+```bash
+git clone https://github.com/danielgurczynski/typeglitch-c1.git
+cd typeglitch-c1
+npm install
+npm test
+```
 
 ## Picking something to work on
 
-- Browse [`good first issue`](https://github.com/danielgurczynski/typeglitch-c1/labels/good%20first%20issue) — small, scoped, well-defined
-- Browse [`help wanted`](https://github.com/danielgurczynski/typeglitch-c1/labels/help%20wanted) — bigger pieces we need a hand with
-- Have a new idea? Open an issue with the `proposal` template first so we can discuss scope before you sink time in
+- [`good first issue`](https://github.com/danielgurczynski/typeglitch-c1/labels/good%20first%20issue) — small, scoped, well-defined
+- [`help wanted`](https://github.com/danielgurczynski/typeglitch-c1/labels/help%20wanted) — larger pieces we need a hand with
+- Have a new idea? Open an issue with the **Proposal** template first so we can discuss scope
 
 ## Pull request checklist
 
-- [ ] One logical change per PR
-- [ ] Tests added/updated
-- [ ] `README` and docs updated if behaviour changed
-- [ ] PR description explains the *why*
+- [ ] Branch is rebased on the latest `main`
+- [ ] CI is green
+- [ ] Tests cover the change
+- [ ] Public docs / README updated if behaviour changed
+- [ ] PR description links the issue it closes
 
 ## Code of conduct
 
-Everyone here agrees to follow our [Code of Conduct](./CODE_OF_CONDUCT.md). Be kind. Assume good faith. Help newcomers.
+Everyone here agrees to follow our [Code of Conduct](./CODE_OF_CONDUCT.md).

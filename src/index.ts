@@ -1,2 +1,8 @@
-// TypeGlitch — entry point
-export const VERSION = "0.0.1";
+/**
+ * TypeGlitch
+ *
+ * A TypeScript-first chaos engineering library for mocking
+ * unpredictable API behaviors during development.
+ */
+
+export * from './schema';

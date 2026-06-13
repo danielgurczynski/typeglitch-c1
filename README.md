@@ -10,7 +10,7 @@
 TypeGlitch is a development-time proxy and interceptor that introduces managed volatility into your network layer. It allows developers to define 'chaos schemas' that simulate race conditions, partial payloads, and latency spikes specifically tailored to their existing TypeScript types.
 
 <!-- progress -->
-_Day 2/90 — Introduces the foundational `ChaosSchema` and `ChaosRule` interfaces, which will be used to configure and apply various types of glitches to network requests._
+_Day 3/90 — Introduces the foundational ChaosSchema, ChaosRule, and ChaosEffect types. This schema serves as the core configuration structure for defining and applying chaos behaviors._
 <!-- /progress -->
 
 ## Table of contents

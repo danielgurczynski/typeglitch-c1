@@ -1,85 +1,67 @@
 /**
- * @module
- * This module defines the core data structures for configuring chaos.
- * The `ChaosSchema` is the central configuration object that maps request
- * identifiers to a set of `ChaosRule`s to be applied.
+ * @module Schema
+ * Defines the core data structures for configuring chaos engineering rules.
  */
 
 /**
- * Defines latency-related glitches.
- * @see Roadmap: Week 2
+ * Represents the HTTP methods that a chaos rule can apply to.
  */
-export interface LatencyGlitch {
-  /**
-   * The base delay to add to the response, in milliseconds.
-   */
-  delayMs: number;
-  /**
-   * The maximum random variation (jitter) to add or subtract from the delay, in milliseconds.
-   * A value of 50 would result in a random delay between `delayMs - 50` and `delayMs + 50`.
-   * @default 0
-   */
-  jitterMs?: number;
-}
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 /**
- * Defines HTTP error response glitches.
- * @see Roadmap: Week 3
+ * A discriminated union representing a single chaos engineering effect.
+ * This will be expanded as more capabilities like data corruption are added.
  */
-export interface ErrorGlitch {
-  /**
-   * A list of HTTP status codes to choose from.
-   * e.g., [400, 404, 500]
-   */
-  statusCodes: number[];
-  /**
-   * The probability (from 0.0 to 1.0) that an error response will be sent.
-   */
-  probability: number;
-}
+export type ChaosEffect =
+  | {
+      /** Applies a fixed latency to the response. */
+      type: 'LATENCY';
+      /** The delay to add, in milliseconds. */
+      delayMs: number;
+    }
+  | {
+      /** Returns a specific HTTP error status code. */
+      type: 'ERROR';
+      /** The HTTP status code to return. */
+      status: number;
+    };
 
 /**
- * Defines data corruption glitches.
- * This is a placeholder for future implementation.
- * @see Roadmap: Week 4
- */
-export interface CorruptionGlitch {
-  /**
-   * Enables or disables data corruption for a given request.
-   * Specific corruption logic will be defined later.
-   */
-  enabled: boolean;
-}
-
-/**
- * A `ChaosRule` encapsulates all the possible glitches that can be applied
- * to a single intercepted network request.
+ * Defines a rule for intercepting a specific API request and applying a chaos effect.
  */
 export interface ChaosRule {
-  /** Optional latency glitch configuration. */
-  latency?: LatencyGlitch;
+  /**
+   * Identifier for the rule, useful for logging and management.
+   */
+  id: string;
 
-  /** Optional error glitch configuration. */
-  error?: ErrorGlitch;
+  /**
+   * The URL path to match. Can be a string for an exact match or a RegExp for pattern matching.
+   * e.g., '/api/users/:id' or /^\/api\/users\/[\w-]+$/
+   */
+  path: string | RegExp;
 
-  /** Optional data corruption glitch configuration. */
-  corruption?: CorruptionGlitch;
+  /**
+   * The HTTP methods to which this rule applies.
+   * If omitted, the rule applies to all methods.
+   */
+  methods?: HttpMethod[];
+
+  /**
+   * The probability (from 0.0 to 1.0) that the chaos effect will be applied on a matched request.
+   * @default 1.0
+   */
+  probability?: number;
+
+  /**
+   * The chaos effect to apply if the request is matched and passes the probability check.
+   */
+  effect: ChaosEffect;
 }
 
 /**
- * The `ChaosSchema` is the root configuration for TypeGlitch.
- * It's a map where keys are unique identifiers for request handlers
- * (e.g., "GET /api/users", "getProfileQuery") and values are the
- * `ChaosRule`s to apply for that handler.
- *
- * @example
- * ```ts
- * const schema: ChaosSchema = {
- *   'getUsers': {
- *     latency: { delayMs: 500, jitterMs: 100 },
- *     error: { statusCodes: [500, 503], probability: 0.1 }
- *   }
- * }
- * ```
+ * The root configuration object for TypeGlitch.
+ * It consists of an array of rules that are evaluated in order for each request.
+ * The first rule that matches a request will be applied.
  */
-export type ChaosSchema = Record<string, ChaosRule>;
+export type ChaosSchema = ChaosRule[];

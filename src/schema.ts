@@ -1,67 +1,72 @@
 /**
- * @module Schema
- * Defines the core data structures for configuring chaos engineering rules.
+ * @file Defines the core data structures and types for configuring chaos behaviors.
  */
 
 /**
- * Represents the HTTP methods that a chaos rule can apply to.
+ * Represents the probability of an event occurring, from 0 (never) to 1 (always).
  */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+export type Probability = number;
 
 /**
- * A discriminated union representing a single chaos engineering effect.
- * This will be expanded as more capabilities like data corruption are added.
+ * Configuration for injecting latency into a response.
  */
-export type ChaosEffect =
-  | {
-      /** Applies a fixed latency to the response. */
-      type: 'LATENCY';
-      /** The delay to add, in milliseconds. */
-      delayMs: number;
-    }
-  | {
-      /** Returns a specific HTTP error status code. */
-      type: 'ERROR';
-      /** The HTTP status code to return. */
-      status: number;
-    };
-
-/**
- * Defines a rule for intercepting a specific API request and applying a chaos effect.
- */
-export interface ChaosRule {
+export interface Latency {
   /**
-   * Identifier for the rule, useful for logging and management.
+   * The fixed delay to add to the response, in milliseconds.
+   * Future versions will support jitter and distribution-based delays.
    */
-  id: string;
-
-  /**
-   * The URL path to match. Can be a string for an exact match or a RegExp for pattern matching.
-   * e.g., '/api/users/:id' or /^\/api\/users\/[\w-]+$/
-   */
-  path: string | RegExp;
-
-  /**
-   * The HTTP methods to which this rule applies.
-   * If omitted, the rule applies to all methods.
-   */
-  methods?: HttpMethod[];
-
-  /**
-   * The probability (from 0.0 to 1.0) that the chaos effect will be applied on a matched request.
-   * @default 1.0
-   */
-  probability?: number;
-
-  /**
-   * The chaos effect to apply if the request is matched and passes the probability check.
-   */
-  effect: ChaosEffect;
+  delayMs: number;
 }
 
 /**
- * The root configuration object for TypeGlitch.
- * It consists of an array of rules that are evaluated in order for each request.
- * The first rule that matches a request will be applied.
+ * Configuration for injecting an HTTP status code error.
  */
-export type ChaosSchema = ChaosRule[];
+export interface HttpError {
+  /**
+   * The HTTP status code to return (e.g., 500, 404, 403).
+   */
+  status: number;
+}
+
+/**
+ * A rule defining one or more chaos effects to apply to a request handler.
+ * Each effect has an associated probability.
+ */
+export interface ChaosRule {
+  /**
+   * The configuration for applying a latency effect.
+   */
+  latency?: {
+    probability: Probability;
+    options: Latency;
+  };
+
+  /**
+   * The configuration for applying an HTTP error effect.
+   */
+  httpError?: {
+    probability: Probability;
+    options: HttpError;
+  };
+}
+
+/**
+ * The root configuration for TypeGlitch.
+ * It maps request handler identifiers (e.g., URL path patterns or operation IDs)
+ * to their corresponding chaos rules.
+ *
+ * @example
+ * const config: ChaosConfig = {
+ *   '/api/users/:id': {
+ *     latency: {
+ *       probability: 0.5,
+ *       options: { delayMs: 1500 }
+ *     },
+ *     httpError: {
+ *       probability: 0.1,
+ *       options: { status: 500 }
+ *     }
+ *   }
+ * }
+ */
+export type ChaosConfig = Record<string, ChaosRule>;

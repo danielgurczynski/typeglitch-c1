@@ -1,72 +1,25 @@
-/**
- * @file Defines the core data structures and types for configuring chaos behaviors.
- */
+import { z } from 'zod';
 
 /**
- * Represents the probability of an event occurring, from 0 (never) to 1 (always).
+ * Defines the Zod schema for chaos configurations.
+ * This is used for runtime validation of chaos profiles.
  */
-export type Probability = number;
-
-/**
- * Configuration for injecting latency into a response.
- */
-export interface Latency {
+export const ChaosConfigSchema = z.object({
   /**
-   * The fixed delay to add to the response, in milliseconds.
-   * Future versions will support jitter and distribution-based delays.
+   * Applies a fixed delay to the response, simulating network latency.
    */
-  delayMs: number;
-}
+  delay: z
+    .object({
+      /** The delay duration in milliseconds. */
+      ms: z.number().int().min(0),
+    })
+    .optional(),
+
+  // More chaos options like errors and data corruption will be added here.
+});
 
 /**
- * Configuration for injecting an HTTP status code error.
+ * The TypeScript type inferred from the Zod schema.
+ * This is the primary configuration object used to control TypeGlitch's behavior.
  */
-export interface HttpError {
-  /**
-   * The HTTP status code to return (e.g., 500, 404, 403).
-   */
-  status: number;
-}
-
-/**
- * A rule defining one or more chaos effects to apply to a request handler.
- * Each effect has an associated probability.
- */
-export interface ChaosRule {
-  /**
-   * The configuration for applying a latency effect.
-   */
-  latency?: {
-    probability: Probability;
-    options: Latency;
-  };
-
-  /**
-   * The configuration for applying an HTTP error effect.
-   */
-  httpError?: {
-    probability: Probability;
-    options: HttpError;
-  };
-}
-
-/**
- * The root configuration for TypeGlitch.
- * It maps request handler identifiers (e.g., URL path patterns or operation IDs)
- * to their corresponding chaos rules.
- *
- * @example
- * const config: ChaosConfig = {
- *   '/api/users/:id': {
- *     latency: {
- *       probability: 0.5,
- *       options: { delayMs: 1500 }
- *     },
- *     httpError: {
- *       probability: 0.1,
- *       options: { status: 500 }
- *     }
- *   }
- * }
- */
-export type ChaosConfig = Record<string, ChaosRule>;
+export type ChaosConfig = z.infer<typeof ChaosConfigSchema>;

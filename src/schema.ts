@@ -1,25 +1,20 @@
 import { z } from 'zod';
 
 /**
- * Defines the Zod schema for chaos configurations.
- * This is used for runtime validation of chaos profiles.
+ * Defines the configuration for chaos engineering applied to a single API endpoint.
  */
-export const ChaosConfigSchema = z.object({
+export const ChaosRuleSchema = z.object({
   /**
-   * Applies a fixed delay to the response, simulating network latency.
+   * Fixed delay in milliseconds to add to the response.
+   * @default 0
    */
-  delay: z
-    .object({
-      /** The delay duration in milliseconds. */
-      ms: z.number().int().min(0),
-    })
-    .optional(),
-
-  // More chaos options like errors and data corruption will be added here.
+  delay: z.number().int().min(0).optional(),
 });
 
+export type ChaosRule = z.infer<typeof ChaosRuleSchema>;
+
 /**
- * The TypeScript type inferred from the Zod schema.
- * This is the primary configuration object used to control TypeGlitch's behavior.
+ * A map of route patterns (e.g., '/api/users/:id') to their chaos configurations.
+ * The key is a string that can be matched against request URLs.
  */
-export type ChaosConfig = z.infer<typeof ChaosConfigSchema>;
+export type ChaosSchema = Record<string, ChaosRule>;

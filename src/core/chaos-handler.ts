@@ -1,24 +1,33 @@
-import { type ChaosRule } from '../schema';
+import { ChaosConfig } from '../schema';
 
-/**
- * A utility to pause execution for a given duration.
- * @param ms - The duration to wait in milliseconds.
- */
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Applies configured chaos rules to a network request lifecycle.
- * This is the core logic that will be called by the interceptor (e.g., MSW).
- * It modifies the execution flow, e.g., by adding delays or throwing errors.
+ * Applies chaos effects based on the provided configuration before executing
+ * and returning the result of the original function (e.g., an API response).
  *
- * @param rule - The chaos rule matching the current request.
- * @returns A promise that resolves when the pre-response chaos has been applied.
+ * This is the core engine that manipulates requests/responses.
+ *
+ * @param config The chaos configuration for this specific handler.
+ * @param originalFn The original, unaltered function to be executed after chaos is applied.
+ * @returns The result of the original function.
  */
-export async function applyChaos(rule: ChaosRule): Promise<void> {
-  // 1. Apply Latency Chaos
-  if (rule.delay && rule.delay > 0) {
-    await sleep(rule.delay);
+export async function applyChaos<T>(
+  config: ChaosConfig | undefined,
+  originalFn: () => T | Promise<T>
+): Promise<T> {
+  if (!config) {
+    return await originalFn();
   }
 
-  // Future chaos logic (e.g., errors, data corruption) will be added here.
+  // 1. Apply Latency
+  if (config.delay && config.delay > 0) {
+    await sleep(config.delay);
+  }
+
+  // 2. Apply other chaos (e.g., status code changes, data corruption)
+  // ...to be implemented in future commits.
+
+  // 3. Execute and return the original response
+  return await originalFn();
 }

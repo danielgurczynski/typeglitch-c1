@@ -1,20 +1,28 @@
-import { z } from 'zod';
-
 /**
- * Defines the configuration for chaos engineering applied to a single API endpoint.
+ * Defines the chaos configuration for a specific request handler.
+ * Each property represents a type of chaos that can be applied.
  */
-export const ChaosRuleSchema = z.object({
+export interface ChaosConfig {
   /**
-   * Fixed delay in milliseconds to add to the response.
+   * Fixed delay to add to the response, in milliseconds.
    * @default 0
    */
-  delay: z.number().int().min(0).optional(),
-});
-
-export type ChaosRule = z.infer<typeof ChaosRuleSchema>;
+  delay?: number;
+}
 
 /**
- * A map of route patterns (e.g., '/api/users/:id') to their chaos configurations.
- * The key is a string that can be matched against request URLs.
+ * Defines the top-level options for initializing TypeGlitch.
  */
-export type ChaosSchema = Record<string, ChaosRule>;
+export interface TypeGlitchOptions {
+  /**
+   * A default chaos configuration to apply to all handlers
+   * that don't have a specific override.
+   */
+  defaultConfig?: ChaosConfig;
+
+  /**
+   * Whether chaos is globally enabled.
+   * @default true
+   */
+  enabled?: boolean;
+}

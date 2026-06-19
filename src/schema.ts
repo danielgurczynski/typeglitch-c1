@@ -1,28 +1,27 @@
-/**
- * Defines the chaos configuration for a specific request handler.
- * Each property represents a type of chaos that can be applied.
- */
-export interface ChaosConfig {
-  /**
-   * Fixed delay to add to the response, in milliseconds.
-   * @default 0
-   */
-  delay?: number;
-}
+import { z } from 'zod';
 
 /**
- * Defines the top-level options for initializing TypeGlitch.
+ * Configuration for adding latency to responses.
+ * - 'fixed': A constant delay for every response.
  */
-export interface TypeGlitchOptions {
-  /**
-   * A default chaos configuration to apply to all handlers
-   * that don't have a specific override.
-   */
-  defaultConfig?: ChaosConfig;
+export const LatencyConfigSchema = z.object({
+    type: z.literal('fixed'),
+    delayMs: z.number().min(0),
+}).strict();
 
-  /**
-   * Whether chaos is globally enabled.
-   * @default true
-   */
-  enabled?: boolean;
-}
+export type LatencyConfig = z.infer<typeof LatencyConfigSchema>;
+
+/**
+ * Defines the set of chaos operations to be applied to a request.
+ */
+export const ChaosConfigSchema = z.object({
+    /**
+     * If provided, adds a delay to the response.
+     * This is the first step towards more complex jitter simulation.
+     */
+    latency: LatencyConfigSchema.optional(),
+
+    // Future chaos options like error rates or payload fuzzing will be added here.
+}).strict();
+
+export type ChaosConfig = z.infer<typeof ChaosConfigSchema>;

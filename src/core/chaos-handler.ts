@@ -1,33 +1,42 @@
 import { ChaosConfig } from '../schema';
 
+// A simple async sleep utility
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Applies chaos effects based on the provided configuration before executing
- * and returning the result of the original function (e.g., an API response).
- *
- * This is the core engine that manipulates requests/responses.
- *
- * @param config The chaos configuration for this specific handler.
- * @param originalFn The original, unaltered function to be executed after chaos is applied.
- * @returns The result of the original function.
+ * Applies chaos effects based on a given configuration.
+ * This class encapsulates the logic for deciding which chaos to apply and when.
  */
-export async function applyChaos<T>(
-  config: ChaosConfig | undefined,
-  originalFn: () => T | Promise<T>
-): Promise<T> {
-  if (!config) {
-    return await originalFn();
-  }
+export class ChaosHandler {
+    constructor(private readonly config: ChaosConfig) {}
 
-  // 1. Apply Latency
-  if (config.delay && config.delay > 0) {
-    await sleep(config.delay);
-  }
+    /**
+     * Applies configured chaos effects before the original response is sent.
+     * This method is called by the network interceptor.
+     */
+    public async apply(): Promise<void> {
+        // Apply latency if configured
+        if (this.config.latency) {
+            await this.applyLatency();
+        }
 
-  // 2. Apply other chaos (e.g., status code changes, data corruption)
-  // ...to be implemented in future commits.
+        // In the future, other chaos like status code overrides or body corruption will be applied here.
+    }
 
-  // 3. Execute and return the original response
-  return await originalFn();
+    /**
+     * Handles latency injection based on the config.
+     */
+    private async applyLatency(): Promise<void> {
+        if (!this.config.latency) return;
+
+        switch (this.config.latency.type) {
+            case 'fixed':
+                await sleep(this.config.latency.delayMs);
+                break;
+            // Jitter algorithms (e.g., 'uniform', 'gaussian') will be added here.
+            default:
+                console.warn(`[TypeGlitch] Unsupported latency type specified.`);
+                break;
+        }
+    }
 }

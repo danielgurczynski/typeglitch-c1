@@ -1,42 +1,33 @@
-import { ChaosConfig } from '../schema';
+import { http, HttpResponse, type RequestHandler, type StrictResponse } from 'msw';
+import { type ChaosSchema } from '../schema';
 
-// A simple async sleep utility
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Applies chaos effects based on a given configuration.
- * This class encapsulates the logic for deciding which chaos to apply and when.
+ * Creates MSW request handlers from a given set of TypeGlitch chaos schemas.
+ * 
+ * @param schemas An array of ChaosSchema definitions.
+ * @returns An array of MSW RequestHandler instances.
  */
-export class ChaosHandler {
-    constructor(private readonly config: ChaosConfig) {}
+export function createChaosHandlers(schemas: ChaosSchema[]): RequestHandler[] {
+  return schemas.map((schema) => {
+    // The main resolver function for MSW. Now async to handle delays.
+    const resolver = async (info: { request: Request; }): Promise<StrictResponse<any>> => {
+      const { config } = schema;
 
-    /**
-     * Applies configured chaos effects before the original response is sent.
-     * This method is called by the network interceptor.
-     */
-    public async apply(): Promise<void> {
-        // Apply latency if configured
-        if (this.config.latency) {
-            await this.applyLatency();
-        }
+      // Apply latency if configured
+      if (config.delayMs && config.delayMs > 0) {
+        await delay(config.delayMs);
+      }
 
-        // In the future, other chaos like status code overrides or body corruption will be applied here.
-    }
+      // Future chaos logic (e.g., status errors, data corruption) will be added here.
+      console.log(`[TypeGlitch] Intercepted ${schema.method.toUpperCase()} ${info.request.url}`);
+      
+      // For now, returns a simple placeholder response.
+      // A full implementation would either forward the request or use a defined mock.
+      return HttpResponse.json({ "message": `Response for ${info.request.url} after chaos.` });
+    };
 
-    /**
-     * Handles latency injection based on the config.
-     */
-    private async applyLatency(): Promise<void> {
-        if (!this.config.latency) return;
-
-        switch (this.config.latency.type) {
-            case 'fixed':
-                await sleep(this.config.latency.delayMs);
-                break;
-            // Jitter algorithms (e.g., 'uniform', 'gaussian') will be added here.
-            default:
-                console.warn(`[TypeGlitch] Unsupported latency type specified.`);
-                break;
-        }
-    }
+    return http[schema.method](schema.path, resolver);
+  });
 }

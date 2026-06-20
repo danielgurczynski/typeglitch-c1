@@ -1,27 +1,44 @@
-import { z } from 'zod';
+import { type Path } from 'msw';
 
 /**
- * Configuration for adding latency to responses.
- * - 'fixed': A constant delay for every response.
+ * Defines a method for an HTTP request.
  */
-export const LatencyConfigSchema = z.object({
-    type: z.literal('fixed'),
-    delayMs: z.number().min(0),
-}).strict();
-
-export type LatencyConfig = z.infer<typeof LatencyConfigSchema>;
+export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
 
 /**
- * Defines the set of chaos operations to be applied to a request.
+ * The core configuration for a single chaos monkey patch.
  */
-export const ChaosConfigSchema = z.object({
-    /**
-     * If provided, adds a delay to the response.
-     * This is the first step towards more complex jitter simulation.
-     */
-    latency: LatencyConfigSchema.optional(),
+export interface ChaosConfig {
+  /**
+   * The probability of this chaos effect being applied, from 0 to 1.
+   * @default 1
+   */
+  probability?: number;
 
-    // Future chaos options like error rates or payload fuzzing will be added here.
-}).strict();
+  /**
+   * A fixed delay in milliseconds to apply to the response.
+   * This simulates network latency.
+   */
+  delayMs?: number;
+}
 
-export type ChaosConfig = z.infer<typeof ChaosConfigSchema>;
+/**
+ * The base schema for intercepting a specific API endpoint.
+ */
+export interface ChaosSchema {
+  /**
+   * The request path to intercept.
+   * e.g., '/users/:id'
+   */
+  path: Path;
+
+  /**
+   * The HTTP method to intercept.
+   */
+  method: HttpMethod;
+
+  /**
+   * The chaos configuration to apply to this endpoint.
+   */
+  config: ChaosConfig;
+}

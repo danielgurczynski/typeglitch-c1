@@ -1,44 +1,22 @@
-import { type Path } from 'msw';
-
 /**
- * Defines a method for an HTTP request.
+ * Defines the configuration for latency simulation.
  */
-export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
-
-/**
- * The core configuration for a single chaos monkey patch.
- */
-export interface ChaosConfig {
-  /**
-   * The probability of this chaos effect being applied, from 0 to 1.
-   * @default 1
-   */
-  probability?: number;
-
+export interface DelayOptions {
   /**
    * A fixed delay in milliseconds to apply to the response.
-   * This simulates network latency.
    */
-  delayMs?: number;
+  fixedMs: number;
 }
 
 /**
- * The base schema for intercepting a specific API endpoint.
+ * The core schema defining a set of chaos effects to apply to a request.
  */
 export interface ChaosSchema {
   /**
-   * The request path to intercept.
-   * e.g., '/users/:id'
+   * Configuration for simulating network latency.
+   * If undefined, no delay is applied.
    */
-  path: Path;
+  delay?: DelayOptions;
 
-  /**
-   * The HTTP method to intercept.
-   */
-  method: HttpMethod;
-
-  /**
-   * The chaos configuration to apply to this endpoint.
-   */
-  config: ChaosConfig;
+  // Future properties for errors, data corruption, etc. will be added here.
 }

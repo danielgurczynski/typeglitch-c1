@@ -1,33 +1,33 @@
-import { http, HttpResponse, type RequestHandler, type StrictResponse } from 'msw';
 import { type ChaosSchema } from '../schema';
+import { type ResponseResolver } from 'msw';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Creates MSW request handlers from a given set of TypeGlitch chaos schemas.
- * 
- * @param schemas An array of ChaosSchema definitions.
- * @returns An array of MSW RequestHandler instances.
+ * A higher-order function that wraps an MSW ResponseResolver to apply chaos.
+ * This allows for injecting delays, errors, and other unpredictable behaviors.
+ *
+ * @param resolver The original MSW response resolver.
+ * @param schema The chaos configuration to apply.
+ * @returns A new response resolver with chaos effects baked in.
  */
-export function createChaosHandlers(schemas: ChaosSchema[]): RequestHandler[] {
-  return schemas.map((schema) => {
-    // The main resolver function for MSW. Now async to handle delays.
-    const resolver = async (info: { request: Request; }): Promise<StrictResponse<any>> => {
-      const { config } = schema;
+export function withChaos(
+  resolver: ResponseResolver,
+  schema: ChaosSchema
+): ResponseResolver {
+  return async (args) => {
+    // 1. Apply latency before resolving the response
+    if (schema.delay?.fixedMs && schema.delay.fixedMs > 0) {
+      await sleep(schema.delay.fixedMs);
+    }
 
-      // Apply latency if configured
-      if (config.delayMs && config.delayMs > 0) {
-        await delay(config.delayMs);
-      }
+    // 2. Call the original resolver to get the base response
+    const response = await resolver(args);
 
-      // Future chaos logic (e.g., status errors, data corruption) will be added here.
-      console.log(`[TypeGlitch] Intercepted ${schema.method.toUpperCase()} ${info.request.url}`);
-      
-      // For now, returns a simple placeholder response.
-      // A full implementation would either forward the request or use a defined mock.
-      return HttpResponse.json({ "message": `Response for ${info.request.url} after chaos.` });
-    };
+    // 3. (Future) Apply chaos transformations to the response itself
+    // For example: corrupting the body, changing the status code, etc.
 
-    return http[schema.method](schema.path, resolver);
-  });
+    return response;
+  };
 }

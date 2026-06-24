@@ -1,33 +1,45 @@
-import { type ChaosSchema } from '../schema';
-import { type ResponseResolver } from 'msw';
+import { ChaosConfig } from '../schema';
+// Assuming MSW is a peer dependency for response/request types.
+// This might be abstracted later.
+import type { MockedResponse } from 'msw';
 
-const sleep = (ms: number): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * A higher-order function that wraps an MSW ResponseResolver to apply chaos.
- * This allows for injecting delays, errors, and other unpredictable behaviors.
- *
- * @param resolver The original MSW response resolver.
- * @param schema The chaos configuration to apply.
- * @returns A new response resolver with chaos effects baked in.
+ * Applies configured chaos effects to a given mocked response.
  */
-export function withChaos(
-  resolver: ResponseResolver,
-  schema: ChaosSchema
-): ResponseResolver {
-  return async (args) => {
-    // 1. Apply latency before resolving the response
-    if (schema.delay?.fixedMs && schema.delay.fixedMs > 0) {
-      await sleep(schema.delay.fixedMs);
+export class ChaosHandler {
+  constructor() {}
+
+  /**
+   * Applies latency effects like fixed delays.
+   */
+  private async applyDelay(config: ChaosConfig): Promise<void> {
+    const delay = config.latency?.delayMs;
+    if (typeof delay === 'number' && delay > 0) {
+      await sleep(delay);
     }
+  }
 
-    // 2. Call the original resolver to get the base response
-    const response = await resolver(args);
+  /**
+   * The main method to process and apply all configured chaos effects.
+   * It acts as a pipeline, calling specialized methods for each chaos type.
+   *
+   * @param config The chaos configuration for the matched route.
+   * @param response The original, un-glitched response.
+   * @returns A promise that resolves to the modified (or original) response.
+   */
+  public async apply(
+    config: ChaosConfig,
+    response: MockedResponse
+  ): Promise<MockedResponse> {
+    // 1. Apply Latency
+    await this.applyDelay(config);
 
-    // 3. (Future) Apply chaos transformations to the response itself
-    // For example: corrupting the body, changing the status code, etc.
+    // 2. TODO: Apply Status Code Failures
+
+    // 3. TODO: Apply Payload Corruption
 
     return response;
-  };
+  }
 }

@@ -1,22 +1,34 @@
 /**
- * Defines the configuration for latency simulation.
+ * Configuration for latency-based chaos.
  */
-export interface DelayOptions {
+export interface ChaosLatencyConfig {
   /**
-   * A fixed delay in milliseconds to apply to the response.
+   * A fixed delay to add to the response, in milliseconds.
+   * @example 500
    */
-  fixedMs: number;
+  delayMs?: number;
 }
 
 /**
- * The core schema defining a set of chaos effects to apply to a request.
+ * Configuration for a specific API route.
+ */
+export interface ChaosConfig {
+  /**
+   * The probability (from 0 to 1) that chaos will be applied to a request.
+   * If not provided, it defaults to 1 (100% of the time).
+   * @default 1
+   */
+  probability?: number;
+
+  /**
+   * Latency-related chaos options.
+   */
+  latency?: ChaosLatencyConfig;
+}
+
+/**
+ * The top-level schema defining chaos configurations for URL patterns.
  */
 export interface ChaosSchema {
-  /**
-   * Configuration for simulating network latency.
-   * If undefined, no delay is applied.
-   */
-  delay?: DelayOptions;
-
-  // Future properties for errors, data corruption, etc. will be added here.
+  [urlPattern: string]: ChaosConfig;
 }

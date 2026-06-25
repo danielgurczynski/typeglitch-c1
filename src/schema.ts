@@ -1,34 +1,25 @@
 /**
- * Configuration for latency-based chaos.
+ * Defines the configuration for latency-based chaos.
  */
-export interface ChaosLatencyConfig {
+export interface LatencyOptions {
   /**
-   * A fixed delay to add to the response, in milliseconds.
-   * @example 500
+   * A fixed delay in milliseconds to add to each response.
+   * If not provided, no delay is added.
+   * @default 0
    */
   delayMs?: number;
 }
 
 /**
- * Configuration for a specific API route.
+ * The main configuration object for all chaos operations.
+ * Users will provide this object to configure the behavior of TypeGlitch.
  */
 export interface ChaosConfig {
   /**
-   * The probability (from 0 to 1) that chaos will be applied to a request.
-   * If not provided, it defaults to 1 (100% of the time).
-   * @default 1
+   * Latency-related chaos settings. When provided, these settings
+   * will be applied to intercepted requests.
    */
-  probability?: number;
+  latency?: LatencyOptions;
 
-  /**
-   * Latency-related chaos options.
-   */
-  latency?: ChaosLatencyConfig;
-}
-
-/**
- * The top-level schema defining chaos configurations for URL patterns.
- */
-export interface ChaosSchema {
-  [urlPattern: string]: ChaosConfig;
+  // Other chaos categories will be added here in the future.
 }

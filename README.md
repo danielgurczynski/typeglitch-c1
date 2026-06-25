@@ -10,7 +10,7 @@
 TypeGlitch is a development-time proxy and interceptor that introduces managed volatility into your network layer. It allows developers to define 'chaos schemas' that simulate race conditions, partial payloads, and latency spikes specifically tailored to their existing TypeScript types.
 
 <!-- progress -->
-_Day 11/90 — Introduces latency simulation by adding a `delayMs` option to the chaos configuration. When set, TypeGlitch will pause for the specified number of milliseconds before processing a request._
+_Day 12/90 — Introduces a programmable fixed delay for network requests. This is the first step in building the latency and jitter engine, allowing developers to simulate slow network conditions by configuring a `delayMs` value in their chaos configuration._
 <!-- /progress -->
 
 ## Table of contents

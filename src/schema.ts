@@ -1,25 +1,32 @@
 /**
- * Defines the configuration for latency-based chaos.
+ * Defines a programmable delay to simulate network latency.
  */
-export interface LatencyOptions {
-  /**
-   * A fixed delay in milliseconds to add to each response.
-   * If not provided, no delay is added.
-   * @default 0
-   */
-  delayMs?: number;
+export interface LatencyConfig {
+  delayMs: number;
+  jitter?: 'uniform' | 'gaussian';
 }
 
 /**
- * The main configuration object for all chaos operations.
- * Users will provide this object to configure the behavior of TypeGlitch.
+ * Defines a network error response to be injected instead of the real one.
+ */
+export interface StatusErrorConfig {
+  /** The HTTP status code to return, e.g., 500, 404. */
+  statusCode: number;
+
+  /** The probability (from 0.0 to 1.0) of this error being triggered. */
+  probability: number;
+}
+
+/**
+ * The core configuration for applying chaos to a request.
+ * Each property represents a different type of "glitch".
  */
 export interface ChaosConfig {
-  /**
-   * Latency-related chaos settings. When provided, these settings
-   * will be applied to intercepted requests.
-   */
-  latency?: LatencyOptions;
+  /** Applies latency to the response. */
+  latency?: LatencyConfig;
 
-  // Other chaos categories will be added here in the future.
+  /** Overrides the response with a specified HTTP status error. */
+  statusError?: StatusErrorConfig;
+
+  // Future chaos types will be added here
 }

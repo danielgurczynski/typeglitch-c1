@@ -1,57 +1,45 @@
-import { ChaosConfig } from '../schema';
+import type { ResponseComposition, RestContext, RestRequest } from 'msw';
+import type { ChaosConfig, StatusErrorConfig } from '../schema';
+
+const applyLatency = (delayMs: number) => new Promise(resolve => setTimeout(resolve, delayMs));
 
 /**
- * A utility function to introduce an artificial delay.
- * @param ms - The duration to wait in milliseconds.
+ * Determines if an error should be returned based on probability.
+ * @param config The status error configuration.
+ * @returns True if the error should be triggered.
  */
-const delay = (ms: number): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+const shouldUseError = (config: StatusErrorConfig): boolean => {
+  if (config.probability <= 0) return false;
+  if (config.probability >= 1) return true;
+  return Math.random() < config.probability;
+};
 
 /**
- * Applies configured latency chaos based on the provided configuration.
- * Currently supports a fixed delay.
- *
- * @param config - The chaos configuration for the current operation.
+ * Creates a chaos-enabled MSW request handler.
+ * The handler will apply configured glitches before passing the request through.
+ * @param config The chaos configuration for this handler.
+ * @returns An MSW request handler function.
  */
-async function applyLatencyChaos(config: ChaosConfig): Promise<void> {
-  const delayMs = config.latency?.delayMs;
+export const createChaosHandler = (config: ChaosConfig) => {
+  return async (
+    req: RestRequest,
+    res: ResponseComposition,
+    ctx: RestContext
+  ) => {
+    // Glitch: Status Error
+    // This glitch is terminal; if it triggers, no other glitches are applied.
+    if (config.statusError && shouldUseError(config.statusError)) {
+      const { statusCode } = config.statusError;
+      return res(ctx.status(statusCode));
+    }
 
-  if (delayMs && delayMs > 0) {
-    // In a real application, this log might be behind a `debug` flag.
-    console.log(`[TypeGlitch] Applying delay of ${delayMs}ms.`);
-    await delay(delayMs);
-  }
-}
+    // Glitch: Latency
+    if (config.latency) {
+        // NOTE: Jitter logic not implemented yet
+        await applyLatency(config.latency.delayMs);
+    }
 
-/**
- * The main chaos handler orchestrates applying different types of chaos.
- */
-export class ChaosHandler {
-  private config: ChaosConfig;
-
-  constructor(config: ChaosConfig = {}) {
-    this.config = config;
-  }
-
-  /**
-   * Applies all configured chaos effects for a given operation.
-   * This is the main entry point for applying chaos.
-   */
-  public async apply(): Promise<void> {
-    // We apply different chaos types in a specific order.
-    // Latency is usually applied first to simulate network travel time.
-    await applyLatencyChaos(this.config);
-
-    // Future chaos functions (e.g., applyErrorChaos, applyDataCorruption)
-    // will be called here.
-  }
-
-  /**
-   * Updates the chaos configuration at runtime.
-   * @param newConfig - The new partial configuration to merge.
-   */
-  public updateConfig(newConfig: Partial<ChaosConfig>) {
-    this.config = { ...this.config, ...newConfig };
-    console.log('[TypeGlitch] Chaos configuration updated.');
-  }
-}
+    // If no glitches terminated the request, pass it through to the original resolver.
+    return req.passthrough();
+  };
+};

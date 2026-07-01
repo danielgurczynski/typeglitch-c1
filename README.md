@@ -10,7 +10,7 @@
 TypeGlitch is a development-time proxy and interceptor that introduces managed volatility into your network layer. It allows developers to define 'chaos schemas' that simulate race conditions, partial payloads, and latency spikes specifically tailored to their existing TypeScript types.
 
 <!-- progress -->
-_Day 13/90 — Introduces a 'statusError' configuration to the ChaosConfig schema. This allows developers to simulate HTTP error responses (e.g., 500, 404) with a configurable probability, enabling testing of application error handling paths._
+_Day 14/90 — Adds a `hang: boolean` option to the Latency configuration. When enabled, TypeGlitch will hold the request open indefinitely, simulating a server that never responds and forcing a client-side timeout. This feature takes precedence over other latency settings like delay and jitter._
 <!-- /progress -->
 
 ## Table of contents

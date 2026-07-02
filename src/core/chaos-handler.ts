@@ -1,39 +1,41 @@
-import { RestHandler, RestRequest, ResponseComposition, RestContext, DefaultBodyType } from 'msw';
+import {
+  RestHandler,
+  RestRequest,
+  ResponseComposition,
+  RestContext,
+} from 'msw';
 import { ChaosConfig } from '../schema';
 import { applyLatency } from './latency';
+import { getProbabilisticHttpError } from './errors';
 
-type OriginalMswHandler = (
+// A generic resolver function provided by the user for their original mock.
+export type OriginalResolver = (
   req: RestRequest,
-  res: ResponseComposition<DefaultBodyType>,
+  res: ResponseComposition,
   ctx: RestContext
 ) => any;
 
 /**
- * The core chaos handler that wraps a user's original MSW handler.
- * It inspects the chaos configuration and applies glitches before (or instead of)
- * calling the original handler.
+ * Wraps an MSW resolver with chaos engineering logic based on the provided config.
+ * The chaos effects are layered in a specific order.
  */
 export function createChaosHandler(
   config: ChaosConfig,
-  originalHandler: OriginalMswHandler
-): RestHandler {
-
+  originalResolver: OriginalResolver
+): RestHandler['resolver'] {
   return async (req, res, ctx) => {
-    const shouldApplyChaos = Math.random() < (config.probability ?? 1);
-
-    if (!shouldApplyChaos) {
-      return originalHandler(req, res, ctx);
-    }
-    
-    // 1. Apply Latency.
-    // If hang:true is set, this promise will never resolve, halting execution.
+    // 1. Apply Latency (from Week 2)
     await applyLatency(config.latency);
 
-    // 2. TODO: Apply Status Code errors.
+    // 2. Inject HTTP Status Errors (from Week 3)
+    const errorStatus = getProbabilisticHttpError(config.httpErrors);
+    if (errorStatus) {
+      // For now, an error injection returns an empty body.
+      // Future work could involve corrupted error payloads.
+      return res(ctx.status(errorStatus));
+    }
 
-    // 3. TODO: Apply Body corruption.
-
-    console.log('[TypeGlitch] Passing to original handler post-chaos.');
-    return originalHandler(req, res, ctx);
+    // If no chaos was applied, proceed to the original handler.
+    return originalResolver(req, res, ctx);
   };
 }

@@ -1,40 +1,25 @@
-import { LatencyOptions } from './core/latency';
-
 /**
- * Configuration for injecting HTTP status code errors.
+ * Configuration for injecting artificial latency.
  */
-export interface HttpErrorOptions {
-  /**
-   * Probability (a number between 0 and 1) of an HTTP error being injected.
-   * @example 0.3 // 30% chance of error
-   */
-  probability: number;
-  /**
-   * A list of HTTP status codes to randomly choose from when an error is injected.
-   * @example [400, 404, 500, 503]
-   */
-  allowedStatusCodes: number[];
+export interface LatencyConfig {
+  /** The base delay in milliseconds. */
+  delayMs: number;
 }
 
 /**
- * The main configuration schema for defining chaos behavior.
+ * Configuration for injecting HTTP status errors.
+ */
+export interface ChaosStatusErrorConfig {
+  /** Probability of injecting a status error (0 to 1). */
+  probability: number;
+  /** Array of HTTP status codes to choose from (e.g., [404, 500, 503]). */
+  codes: number[];
+}
+
+/**
+ * Defines the complete configuration for all active chaos effects.
  */
 export interface ChaosConfig {
-  /**
-   * Configuration for simulating network latency and jitter.
-   */
-  latency?: LatencyOptions;
-  /**
-   * Configuration for injecting HTTP status code errors.
-   */
-  httpErrors?: HttpErrorOptions;
-}
-
-/**
- * Defines the shape of a chaos-enabled API endpoint.
- */
-export interface ChaosSchema {
-  [path: string]: {
-    [method: string]: ChaosConfig;
-  };
+  latency?: LatencyConfig;
+  statusErrors?: ChaosStatusErrorConfig;
 }

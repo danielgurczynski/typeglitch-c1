@@ -1,25 +1,37 @@
+import { HttpStatusCode } from './core/status-errors';
+
 /**
- * Configuration for injecting artificial latency.
+ * Configuration for adding artificial latency to responses.
  */
-export interface LatencyConfig {
-  /** The base delay in milliseconds. */
+export interface LatencyOptions {
   delayMs: number;
+  jitter?: {
+    type: 'uniform' | 'gaussian';
+    rangeMs: number;
+  };
 }
 
 /**
- * Configuration for injecting HTTP status errors.
+ * Configuration for injecting HTTP status code errors.
  */
-export interface ChaosStatusErrorConfig {
-  /** Probability of injecting a status error (0 to 1). */
+export interface StatusErrorOptions {
   probability: number;
-  /** Array of HTTP status codes to choose from (e.g., [404, 500, 503]). */
-  codes: number[];
+  statusCodes: HttpStatusCode[];
 }
 
 /**
- * Defines the complete configuration for all active chaos effects.
+ * Configuration for returning a 200 OK with an empty body.
+ */
+export interface SilentFailOptions {
+  probability: number;
+}
+
+/**
+ * The main configuration schema that defines all possible chaos operations
+ * for a given mocked endpoint.
  */
 export interface ChaosConfig {
-  latency?: LatencyConfig;
-  statusErrors?: ChaosStatusErrorConfig;
+  latency?: LatencyOptions;
+  statusError?: StatusErrorOptions;
+  silentFail?: SilentFailOptions;
 }

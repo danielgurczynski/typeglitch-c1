@@ -1,41 +1,39 @@
 import { ChaosConfig } from '../schema';
 import { applyLatency } from './latency';
-import { pickStatusError } from './status-errors';
-import { HttpResponse } from 'msw';
+import { getStatusError } from './status-errors';
+import { MockedRequest, ResponseResolver, context } from 'msw';
+
+type MswContext = typeof context;
 
 /**
- * The core chaos handler that intercepts a request and applies configured chaos effects.
- * This is a simplified representation to be used within an MSW resolver.
+ * Creates a higher-order MSW response resolver that injects chaos based on the provided configuration.
  *
- * @param config The active chaos configuration.
- * @param originalRequest A function that performs the original request and returns a Response.
- * @returns A Response, either the original or a chaos-injected one.
+ * @param config The chaos configuration for this handler.
+ * @param originalResolver The original MSW response resolver to be called for successful responses.
+ * @returns An MSW ResponseResolver that applies chaos effects.
  */
-export async function applyChaos(
+export function createChaosHandler(
   config: ChaosConfig,
-  originalRequest: () => Promise<Response>
-): Promise<Response> {
-  // 1. Apply Latency
-  if (config.latency) {
+  originalResolver: ResponseResolver<MockedRequest, MswContext>
+): ResponseResolver<MockedRequest, MswContext> {
+  return async (req, res, ctx) => {
+    // Latency is applied to all responses, including errors and silent fails.
     await applyLatency(config.latency);
-  }
 
-  // 2. Check for Status Error Injection
-  if (config.statusErrors) {
-    const injectedStatus = pickStatusError(config.statusErrors);
-    if (injectedStatus) {
-      // If a status error is chosen, we short-circuit the original request.
-      return new HttpResponse(null, {
-        status: injectedStatus,
-        statusText: `TypeGlitch Injected Error`,
-      });
+    // 1. Check for Silent Fail
+    // This returns a 200 OK with an empty body, simulating a successful
+    // but unexpectedly empty response.
+    if (config.silentFail && Math.random() < config.silentFail.probability) {
+      return res(ctx.status(200), ctx.json({}));
     }
-  }
 
-  // If no terminating chaos was applied, perform the original request.
-  const response = await originalRequest();
+    // 2. Check for Status Error
+    const statusError = getStatusError(config.statusError);
+    if (statusError) {
+      return res(ctx.status(statusError));
+    }
 
-  // Future chaos effects like payload mutation could go here, after the response is fetched.
-
-  return response;
+    // 3. Pass through to the original resolver for a normal successful response.
+    return originalResolver(req, res, ctx);
+  };
 }

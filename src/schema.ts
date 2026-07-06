@@ -1,37 +1,34 @@
-import { HttpStatusCode } from './core/status-errors';
-
-/**
- * Configuration for adding artificial latency to responses.
- */
-export interface LatencyOptions {
-  delayMs: number;
-  jitter?: {
-    type: 'uniform' | 'gaussian';
-    rangeMs: number;
-  };
-}
+import type { LatencyConfig } from './core/latency';
 
 /**
  * Configuration for injecting HTTP status code errors.
  */
-export interface StatusErrorOptions {
-  probability: number;
-  statusCodes: HttpStatusCode[];
+export interface StatusErrorConfig {
+  /**
+   * The probability of a status error being injected, from 0.0 to 1.0.
+   * If not provided, it defaults to 1.0 (always trigger).
+   * @default 1.0
+   */
+  probability?: number;
+
+  /**
+   * The list of HTTP status codes to choose from when an error is triggered.
+   * If an error is triggered and this list is empty, it defaults to 500.
+   */
+  allowedStatusCodes: number[];
 }
 
 /**
- * Configuration for returning a 200 OK with an empty body.
- */
-export interface SilentFailOptions {
-  probability: number;
-}
-
-/**
- * The main configuration schema that defines all possible chaos operations
- * for a given mocked endpoint.
+ * The main configuration object for TypeGlitch.
  */
 export interface ChaosConfig {
-  latency?: LatencyOptions;
-  statusError?: StatusErrorOptions;
-  silentFail?: SilentFailOptions;
+  /**
+   * Defines latency-related chaos like delays and jitter.
+   */
+  latency?: LatencyConfig;
+
+  /**
+   * Defines HTTP status code errors.
+   */
+  statusErrors?: StatusErrorConfig;
 }

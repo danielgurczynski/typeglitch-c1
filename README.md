@@ -10,7 +10,7 @@
 TypeGlitch is a development-time proxy and interceptor that introduces managed volatility into your network layer. It allows developers to define 'chaos schemas' that simulate race conditions, partial payloads, and latency spikes specifically tailored to their existing TypeScript types.
 
 <!-- progress -->
-_Day 18/90 — Introduces a `probability` option to the `statusErrors` configuration. This allows developers to specify the likelihood of an HTTP status error being injected, making chaos experiments more realistic._
+_Day 19/90 — Adds a 'Silent Fail' chaos mode. When enabled, a portion of status-based errors will return a 200 OK status with an empty JSON object body, simulating a common source of client-side parsing errors._
 <!-- /progress -->
 
 ## Table of contents

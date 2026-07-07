@@ -1,34 +1,46 @@
-import type { LatencyConfig } from './core/latency';
+import { ZodSchema } from 'zod';
 
 /**
- * Configuration for injecting HTTP status code errors.
+ * Defines the probability and distribution for latency injection.
  */
-export interface StatusErrorConfig {
-  /**
-   * The probability of a status error being injected, from 0.0 to 1.0.
-   * If not provided, it defaults to 1.0 (always trigger).
-   * @default 1.0
-   */
-  probability?: number;
-
-  /**
-   * The list of HTTP status codes to choose from when an error is triggered.
-   * If an error is triggered and this list is empty, it defaults to 500.
-   */
-  allowedStatusCodes: number[];
+export interface ChaosLatencyConfig {
+  // Probability of latency being applied (0 to 1)
+  probability: number;
+  // The minimum delay in milliseconds.
+  min: number;
+  // The maximum delay in milliseconds.
+  max: number;
 }
 
 /**
- * The main configuration object for TypeGlitch.
+ * Defines the configuration for status code-based errors.
+ */
+export interface ChaosStatusConfig {
+  // Probability of ANY status-related error occurring (0 to 1).
+  probability: number;
+  // List of HTTP status codes to randomly choose from.
+  // Defaults to a set of common 4xx and 5xx codes.
+  allowedCodes?: number[];
+  // If true, a portion of status errors will be 'Silent Fails'
+  // (i.e., a 200 OK status with an empty JSON body), testing client-side parsing.
+  includeSilentFail?: boolean;
+}
+
+/**
+ * The root configuration for a single endpoint.
  */
 export interface ChaosConfig {
-  /**
-   * Defines latency-related chaos like delays and jitter.
-   */
-  latency?: LatencyConfig;
+  latency?: ChaosLatencyConfig;
+  status?: ChaosStatusConfig;
+  // Future: Add data corruption config
+  // data?: ChaosDataConfig<T>;
+}
 
-  /**
-   * Defines HTTP status code errors.
-   */
-  statusErrors?: StatusErrorConfig;
+/**
+ * A schema that combines a Zod schema for type validation with
+ * chaos engineering configuration.
+ */
+export interface ChaosSchema<T extends ZodSchema> {
+  schema: T;
+  chaos: ChaosConfig;
 }

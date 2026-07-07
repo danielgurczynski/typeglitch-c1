@@ -1,40 +1,38 @@
-import type { StatusErrorConfig } from '../schema';
+import { ResponseComposition, RestContext } from 'msw';
+import { ChaosStatusConfig } from '../schema';
+
+const DEFAULT_ERROR_CODES = [400, 401, 403, 404, 500, 503];
+
+// If silent fails are enabled, this is the chance they'll be chosen over a standard error code.
+const SILENT_FAIL_RATIO = 0.3;
 
 /**
- * Normalizes a probability value to be between 0.0 and 1.0.
- * @param p The probability input. Defaults to 1.0 if undefined.
- * @returns A number in the range [0, 1].
- */
-function normalizeProbability(p: number | undefined): number {
-  const defaultProbability = 1.0;
-  if (p === undefined) {
-    return defaultProbability;
-  }
-  return Math.max(0.0, Math.min(1.0, p));
-}
-
-/**
- * Determines if a status error should be injected based on the configuration
- * and probability, and if so, which status code to use.
+ * Applies a status code error based on the provided chaos configuration.
  *
- * @param config The status error configuration.
- * @returns An HTTP status code if an error should be injected, otherwise null.
+ * This can be either a standard HTTP error status (e.g., 404, 500) or
+ * a 'Silent Fail', which returns a 200 OK with an empty body to test
+ * client-side data handling.
+ *
+ * @returns A modified MSW response handler or null if no error should be applied.
  */
-export function getStatusError(config: StatusErrorConfig): number | null {
-  const probability = normalizeProbability(config.probability);
-
-  // If the random number is greater than the probability, don't inject an error.
-  // e.g., if probability is 0.3, we trigger on Math.random() < 0.3.
-  if (Math.random() >= probability) {
-    return null;
+export function applyStatusError(
+  res: ResponseComposition,
+  ctx: RestContext,
+  config: ChaosStatusConfig
+) {
+  if (Math.random() >= config.probability) {
+    return null; // Don't apply any error
   }
 
-  const { allowedStatusCodes } = config;
-  if (!allowedStatusCodes || allowedStatusCodes.length === 0) {
-    // Probability check passed, but no codes configured. Default to 500.
-    return 500;
+  // Determine if this error should be a 'Silent Fail'
+  if (config.includeSilentFail && Math.random() < SILENT_FAIL_RATIO) {
+    // Return 200 OK but with an empty JSON object body, a common source of bugs.
+    return res(ctx.status(200), ctx.json({}));
   }
 
-  const randomIndex = Math.floor(Math.random() * allowedStatusCodes.length);
-  return allowedStatusCodes[randomIndex];
+  // Otherwise, proceed with a standard HTTP error code
+  const codes = config.allowedCodes ?? DEFAULT_ERROR_CODES;
+  const selectedCode = codes[Math.floor(Math.random() * codes.length)];
+
+  return res(ctx.status(selectedCode));
 }

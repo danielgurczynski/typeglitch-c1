@@ -1,38 +1,35 @@
-import { ResponseComposition, RestContext } from 'msw';
-import { ChaosStatusConfig } from '../schema';
+import { StatusGlitchConfig } from '../schema';
 
-const DEFAULT_ERROR_CODES = [400, 401, 403, 404, 500, 503];
-
-// If silent fails are enabled, this is the chance they'll be chosen over a standard error code.
-const SILENT_FAIL_RATIO = 0.3;
+function getRandomCode(codes: number[]): number {
+  return codes[Math.floor(Math.random() * codes.length)];
+}
 
 /**
- * Applies a status code error based on the provided chaos configuration.
+ * Checks the status glitch configuration and, if triggered by probability,
+ * returns a new Response object representing the glitch.
  *
- * This can be either a standard HTTP error status (e.g., 404, 500) or
- * a 'Silent Fail', which returns a 200 OK with an empty body to test
- * client-side data handling.
- *
- * @returns A modified MSW response handler or null if no error should be applied.
+ * @param config The status glitch configuration.
+ * @returns A Response object if a glitch is applied, otherwise null.
  */
-export function applyStatusError(
-  res: ResponseComposition,
-  ctx: RestContext,
-  config: ChaosStatusConfig
-) {
-  if (Math.random() >= config.probability) {
-    return null; // Don't apply any error
+export function applyStatusGlitch(
+  config: StatusGlitchConfig | undefined
+): Response | null {
+  if (!config || Math.random() > config.probability) {
+    return null;
   }
 
-  // Determine if this error should be a 'Silent Fail'
-  if (config.includeSilentFail && Math.random() < SILENT_FAIL_RATIO) {
-    // Return 200 OK but with an empty JSON object body, a common source of bugs.
-    return res(ctx.status(200), ctx.json({}));
+  switch (config.type) {
+    case 'statusCode': {
+      const randomStatus = getRandomCode(config.codes);
+      console.log(`[TypeGlitch] Injecting status code error: ${randomStatus}`);
+      return new Response(null, { status: randomStatus });
+    }
+    case 'silent': {
+      console.log('[TypeGlitch] Injecting silent fail (200 OK with empty body)');
+      // Return 200 OK, but with an empty body, which can trip up parsers.
+      return new Response(null, { status: 200 });
+    }
+    default:
+      return null;
   }
-
-  // Otherwise, proceed with a standard HTTP error code
-  const codes = config.allowedCodes ?? DEFAULT_ERROR_CODES;
-  const selectedCode = codes[Math.floor(Math.random() * codes.length)];
-
-  return res(ctx.status(selectedCode));
 }
